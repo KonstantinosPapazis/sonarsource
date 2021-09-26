@@ -58,7 +58,7 @@ jobs:
         run: |-
           .github/scripts/dependencies.sh
 
-      - name: Check namespaces needed
+      - name: Check namespaces and rbac account needed
         run: |-
           .github/scripts/check_namespaces.sh
 
