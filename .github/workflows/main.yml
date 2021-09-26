@@ -1,0 +1,92 @@
+name: main
+on:
+  workflow_dispatch:
+  #push:
+  #branches: [ main ]
+
+env:
+  CLUSTER_NAME: "cluster-1"
+  PROJECT_ID_GCP: "coral-hydra-327215"
+  REGION: "us-central1-c"
+  INSTALL_VOTTING_APP: 'false'
+  INSTALL_GRAFANA: 'false'
+  INSTALL_PROMETHEUS: 'false'
+  INSTALL_KUBE_METRICS: 'false'
+  INSTALL_NODE_EXPORTER_METRICS: 'false'
+  INSTALL_DEPENDENCIES: 'false'
+  RBAC_INSTALL_DEPENDENCIES: 'false'
+
+jobs:
+  main:
+    runs-on: [ ubuntu-latest ]
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: gcloud
+        uses: google-github-actions/setup-gcloud@master
+
+        with:
+          version: '299.0.0'
+
+          project_id: ${{ env.PROJECT_ID_GCP }}
+          service_account_key: ${{ secrets.GCP_SECRET }}
+
+      - name: gcloud environment
+        run: |-
+          GCP_CLUSTER=${{ env.CLUSTER_NAME }}
+          GCP_REGION=${{ env.REGION }}
+
+          gcloud --quiet auth configure-docker
+          gcloud container clusters get-credentials "${GCP_CLUSTER}" --region "${GCP_REGION}"
+
+      - name: Install dependencies (if needed)
+        if: ${{ env.INSTALL_DEPENDENCIES == 'true' }}
+        run: |-
+          .github/scripts/dependencies.sh
+
+      - name: Check namespaces needed
+        run: |-
+          .github/scripts/check_namespaces.sh
+
+      - name: Install rights for creating rbac's (GKE dependency)
+        if: ${{ env.RBAC_INSTALL_DEPENDENCIES == 'true' }}
+        run: |-
+          ACCOUNT=$(gcloud info --format='value(config.account)')
+          kubectl create clusterrolebinding owner-cluster-admin-binding \
+              --clusterrole cluster-admin \
+              --user $ACCOUNT
+
+      - name: Install Kube Metrics
+        if: ${{ env.INSTALL_KUBE_METRICS == 'true' }}
+        run: |-
+          kubectl apply -f kube_metrics_install/.
+
+      - name: Install Node Exporter Metrics
+        if: ${{ env.INSTALL_NODE_EXPORTER_METRICS == 'true' }}
+        run: |-
+          kubectl apply -f node_exporter_metrics_install/.
+
+      - name: Install Prometheus
+        if: ${{ env.INSTALL_PROMETHEUS == 'true' }}
+        run: |-
+          kubectl apply -f prometheus_install/.
+
+      - name: Install Grafana
+        if: ${{ env.INSTALL_GRAFANA == 'true' }}
+        run: |-
+          kubectl apply -f grafana_install/.
+
+      - name: Install Demo Voting App
+          if: ${{ env.INSTALL_VOTTING_APP == 'true' }}
+          run: |-
+            kubectl apply -f demo_voting_app/. -n vote
+
+      - name: Test kubectl
+        run: |
+          sudo su
+          kubectl cluster-info
+          kubectl get pods -A
+
+
+
