@@ -87,8 +87,3 @@ jobs:
         run: |-
           kubectl apply -f demo_voting_app/. -n vote
 
-      - name: Test kubectl
-        run: |
-          sudo su
-          kubectl cluster-info
-          kubectl get pods -A
