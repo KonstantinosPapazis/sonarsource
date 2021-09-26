@@ -22,8 +22,8 @@ env:
   INSTALL_PROMETHEUS: 'true'
   INSTALL_KUBE_METRICS: 'true'
   INSTALL_NODE_EXPORTER_METRICS: 'true'
-  INSTALL_DEPENDENCIES: 'true'
-  RBAC_INSTALL_DEPENDENCIES: 'true'
+  INSTALL_DEPENDENCIES: 'false'
+  RBAC_INSTALL_DEPENDENCIES: 'false'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
