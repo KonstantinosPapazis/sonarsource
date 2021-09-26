@@ -23,7 +23,6 @@ env:
   INSTALL_KUBE_METRICS: 'true'
   INSTALL_NODE_EXPORTER_METRICS: 'true'
   INSTALL_DEPENDENCIES: 'false'
-  RBAC_INSTALL_DEPENDENCIES: 'false'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -62,14 +61,6 @@ jobs:
       - name: Check namespaces needed
         run: |-
           .github/scripts/check_namespaces.sh
-
-      - name: Install rights for creating rbac's (GKE dependency)
-        if: ${{ env.RBAC_INSTALL_DEPENDENCIES == 'true' }}
-        run: |-
-          ACCOUNT=$(gcloud info --format='value(config.account)')
-          kubectl create clusterrolebinding owner-cluster-admin-binding \
-              --clusterrole cluster-admin \
-              --user $ACCOUNT
 
       - name: Install Kube Metrics
         if: ${{ env.INSTALL_KUBE_METRICS == 'true' }}

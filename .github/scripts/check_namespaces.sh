@@ -9,3 +9,10 @@ fi
 if [[ -z $(kubectl get ns | grep vote) ]]; then
   kubectl create ns vote
 fi
+
+if [[ -z $(kubectl get clusterrolebinding | grep owner-cluster-admin-binding) ]]; then
+  ACCOUNT=$(gcloud info --format='value(config.account)')
+  kubectl create clusterrolebinding owner-cluster-admin-binding \
+      --clusterrole cluster-admin \
+      --user $ACCOUNT
+fi
